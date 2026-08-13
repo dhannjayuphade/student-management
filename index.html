@@ -1,134 +1,376 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Study Manager V2</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Student Study Manager</title>
+
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
+<!-- LOGIN -->
+
+<div id="loginPage">
+
+  <div class="login-card">
+
+    <div class="logo">📚</div>
+
+    <h1>Student Study Manager</h1>
+
+    <p>Institute Management System</p>
+
+    <input
+      id="loginEmail"
+      type="email"
+      placeholder="Email"
+    >
+
+    <input
+      id="loginPassword"
+      type="password"
+      placeholder="Password"
+    >
+
+    <button onclick="login()">
+      🔐 Login
+    </button>
+
+    <button
+      class="secondary"
+      onclick="showRegister()"
+    >
+      Create Account
+    </button>
+
+    <div id="loginMessage"></div>
+
+  </div>
+
+</div>
+
+
+<!-- REGISTER -->
+
+<div id="registerPage" class="hidden">
+
+  <div class="login-card">
+
+    <div class="logo">👤</div>
+
+    <h2>Create Account</h2>
+
+    <input
+      id="regName"
+      placeholder="Full Name"
+    >
+
+    <input
+      id="regEmail"
+      type="email"
+      placeholder="Email"
+    >
+
+    <input
+      id="regPassword"
+      type="password"
+      placeholder="Password"
+    >
+
+    <select id="regRole">
+      <option value="student">Student</option>
+      <option value="teacher">Teacher</option>
+      <option value="principal">Principal</option>
+    </select>
+
+    <button onclick="register()">
+      Create Account
+    </button>
+
+    <button
+      class="secondary"
+      onclick="showLogin()"
+    >
+      ← Back to Login
+    </button>
+
+    <div id="registerMessage"></div>
+
+  </div>
+
+</div>
+
+
+<!-- APP -->
+
+<div id="app" class="hidden">
+
 <header>
-  <h1>📚 Student Study Manager</h1>
-  <p>Teacher Panel</p>
+
+  <div>
+    <h1>📚 Student Study Manager</h1>
+    <small id="userInfo"></small>
+  </div>
+
+  <button
+    class="logout"
+    onclick="logout()"
+  >
+    Logout
+  </button>
+
 </header>
 
+
 <nav>
-  <button onclick="showPage('dashboard')">🏠 Dashboard</button>
-  <button onclick="showPage('students')">👨‍🎓 Students</button>
-  <button onclick="showPage('tasks')">📚 Teacher Tasks</button>
+
+  <button onclick="showPage('dashboard')">
+    🏠 Dashboard
+  </button>
+
+  <button onclick="showPage('students')">
+    👨‍🎓 Students
+  </button>
+
+  <button
+    id="teacherNav"
+    onclick="showPage('tasks')"
+  >
+    📚 Tasks
+  </button>
+
+  <button
+    id="peopleNav"
+    onclick="showPage('people')"
+  >
+    👥 Users
+  </button>
+
+  <button onclick="showPage('reports')">
+    📊 Reports
+  </button>
+
 </nav>
+
 
 <main>
 
-<section id="dashboard" class="page">
-  <h2>🏠 Dashboard</h2>
+<!-- DASHBOARD -->
 
-  <div class="cards">
-    <div class="card">
-      <b id="totalStudents">0</b>
-      <span>Students</span>
-    </div>
+<section
+  id="dashboard"
+  class="page"
+>
 
-    <div class="card">
-      <b id="totalTasks">0</b>
-      <span>Tasks</span>
-    </div>
+<h2>🏠 Dashboard</h2>
 
-    <div class="card">
-      <b id="completed">0</b>
-      <span>Completed</span>
-    </div>
+<div class="cards">
 
-    <div class="card">
-      <b id="pending">0</b>
-      <span>Pending</span>
-    </div>
-  </div>
-</section>
+<div class="card">
+<span>👨‍🎓</span>
+<b id="totalStudents">0</b>
+<p>Students</p>
+</div>
 
+<div class="card">
+<span>👨‍🏫</span>
+<b id="totalTeachers">0</b>
+<p>Teachers</p>
+</div>
 
-<section id="students" class="page hidden">
+<div class="card">
+<span>📚</span>
+<b id="totalTasks">0</b>
+<p>Tasks</p>
+</div>
 
-  <h2>👨‍🎓 Students</h2>
+<div class="card">
+<span>🟢</span>
+<b id="totalCompleted">0</b>
+<p>Completed</p>
+</div>
 
-  <div class="form">
-    <input id="studentName" placeholder="Student Name">
-    <input id="rollNo" type="number" placeholder="Roll No">
-    <input id="phone" placeholder="Phone Number">
-    <input id="studentClass" placeholder="Class / Batch">
+</div>
 
-    <button onclick="addStudent()">➕ Add Student</button>
-  </div>
-
-  <input
-    class="search"
-    id="studentSearch"
-    placeholder="🔎 Search student..."
-    oninput="displayStudents()"
-  >
-
-  <div id="studentGrid"></div>
+<div id="dashboardContent"></div>
 
 </section>
 
 
-<section id="tasks" class="page hidden">
+<!-- STUDENTS -->
 
-  <h2>📚 Teacher Task</h2>
+<section
+id="students"
+class="page hidden"
+>
 
-  <div class="form">
+<h2>👨‍🎓 Students</h2>
 
-    <select id="taskType">
-      <option>🏫 Class Work</option>
-      <option>🏠 Home Work</option>
-      <option>❓ Question Answer</option>
-      <option>📄 Question Paper Solve</option>
-      <option>🎯 CET Questions</option>
-      <option>🎨 Activity</option>
-    </select>
+<div
+id="studentForm"
+class="form"
+>
 
-    <input
-      id="taskTitle"
-      placeholder="Task / Chapter Name"
-    >
+<input
+id="studentName"
+placeholder="Student Name"
+>
 
-    <textarea
-      id="taskDescription"
-      placeholder="Task Description / Questions"
-    ></textarea>
+<input
+id="rollNo"
+type="number"
+placeholder="Roll Number"
+>
 
-    <input
-      id="taskDate"
-      type="date"
-    >
+<input
+id="studentPhone"
+placeholder="Phone Number"
+>
 
-    <button onclick="addTeacherTask()">
-      ➕ Add Task For All Students
-    </button>
+<input
+id="studentClass"
+placeholder="Class / Batch"
+>
 
-  </div>
+<button onclick="addStudent()">
+➕ Add Student
+</button>
 
-  <h3>📋 Added Tasks</h3>
+</div>
 
-  <div id="allTasks"></div>
+<input
+id="studentSearch"
+class="search"
+placeholder="🔎 Search student..."
+oninput="renderStudents()"
+>
+
+<div id="studentGrid"></div>
 
 </section>
 
 
-<section id="studentProfile" class="page hidden">
+<!-- TASKS -->
 
-  <button onclick="showPage('students')">
-    ← Back
-  </button>
+<section
+id="tasks"
+class="page hidden"
+>
 
-  <div id="profileBox"></div>
+<h2>📚 Teacher Task</h2>
+
+<div
+id="taskForm"
+class="form"
+>
+
+<select id="taskSubject">
+<option>Physics</option>
+<option>Chemistry</option>
+<option>Mathematics</option>
+<option>Biology</option>
+</select>
+
+<select id="taskType">
+<option>Class Work</option>
+<option>Home Work</option>
+<option>Question Answer</option>
+<option>Question Paper Solve</option>
+<option>CET Questions</option>
+<option>Activity</option>
+</select>
+
+<input
+id="taskTitle"
+placeholder="Task / Chapter"
+>
+
+<textarea
+id="taskDescription"
+placeholder="Task description"
+></textarea>
+
+<input
+id="taskDate"
+type="date"
+>
+
+<button onclick="addTask()">
+➕ Assign Task To All Students
+</button>
+
+</div>
+
+<div id="taskList"></div>
+
+</section>
+
+
+<!-- USERS -->
+
+<section
+id="people"
+class="page hidden"
+>
+
+<h2>👥 Users</h2>
+
+<div id="usersList"></div>
+
+</section>
+
+
+<!-- REPORTS -->
+
+<section
+id="reports"
+class="page hidden"
+>
+
+<h2>📊 Reports</h2>
+
+<select
+id="reportStudent"
+onchange="showStudentReport()"
+>
+<option value="">
+Select Student
+</option>
+</select>
+
+<div id="reportBox"></div>
+
+</section>
+
+
+<!-- PROFILE -->
+
+<section
+id="profile"
+class="page hidden"
+>
+
+<button onclick="showPage('students')">
+← Back
+</button>
+
+<div id="profileBox"></div>
 
 </section>
 
 </main>
 
-<script src="app.js"></script>
-<footer> software create by Dhananjay uphade </footer>
+</div>
+
+
+<script
+type="module"
+src="app.js"
+></script>
+  <footer>software create by Dhannjay uphade </footer>
+
 </body>
-  </html>
+      </html>
