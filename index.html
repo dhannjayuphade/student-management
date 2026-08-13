@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Study Manager V2</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+  <h1>📚 Student Study Manager</h1>
+  <p>Teacher Panel</p>
+</header>
+
+<nav>
+  <button onclick="showPage('dashboard')">🏠 Dashboard</button>
+  <button onclick="showPage('students')">👨‍🎓 Students</button>
+  <button onclick="showPage('tasks')">📚 Teacher Tasks</button>
+</nav>
+
+<main>
+
+<section id="dashboard" class="page">
+  <h2>🏠 Dashboard</h2>
+
+  <div class="cards">
+    <div class="card">
+      <b id="totalStudents">0</b>
+      <span>Students</span>
+    </div>
+
+    <div class="card">
+      <b id="totalTasks">0</b>
+      <span>Tasks</span>
+    </div>
+
+    <div class="card">
+      <b id="completed">0</b>
+      <span>Completed</span>
+    </div>
+
+    <div class="card">
+      <b id="pending">0</b>
+      <span>Pending</span>
+    </div>
+  </div>
+</section>
+
+
+<section id="students" class="page hidden">
+
+  <h2>👨‍🎓 Students</h2>
+
+  <div class="form">
+    <input id="studentName" placeholder="Student Name">
+    <input id="rollNo" type="number" placeholder="Roll No">
+    <input id="phone" placeholder="Phone Number">
+    <input id="studentClass" placeholder="Class / Batch">
+
+    <button onclick="addStudent()">➕ Add Student</button>
+  </div>
+
+  <input
+    class="search"
+    id="studentSearch"
+    placeholder="🔎 Search student..."
+    oninput="displayStudents()"
+  >
+
+  <div id="studentGrid"></div>
+
+</section>
+
+
+<section id="tasks" class="page hidden">
+
+  <h2>📚 Teacher Task</h2>
+
+  <div class="form">
+
+    <select id="taskType">
+      <option>🏫 Class Work</option>
+      <option>🏠 Home Work</option>
+      <option>❓ Question Answer</option>
+      <option>📄 Question Paper Solve</option>
+      <option>🎯 CET Questions</option>
+      <option>🎨 Activity</option>
+    </select>
+
+    <input
+      id="taskTitle"
+      placeholder="Task / Chapter Name"
+    >
+
+    <textarea
+      id="taskDescription"
+      placeholder="Task Description / Questions"
+    ></textarea>
+
+    <input
+      id="taskDate"
+      type="date"
+    >
+
+    <button onclick="addTeacherTask()">
+      ➕ Add Task For All Students
+    </button>
+
+  </div>
+
+  <h3>📋 Added Tasks</h3>
+
+  <div id="allTasks"></div>
+
+</section>
+
+
+<section id="studentProfile" class="page hidden">
+
+  <button onclick="showPage('students')">
+    ← Back
+  </button>
+
+  <div id="profileBox"></div>
+
+</section>
+
+</main>
+
+<script src="app.js"></script>
+<footer> software create by Dhananjay uphade </footer>
+</body>
+  </html>
