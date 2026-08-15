@@ -19,6 +19,28 @@ import {
   serverTimestamp
 } from "./firebase.js";
 
+import {
+  auth,
+  db,
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signInWithPopup,
+  GoogleAuthProvider,
+  signOut,
+  doc,
+  setDoc,
+  getDoc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  collection,
+  query,
+  where,
+  onSnapshot,
+  serverTimestamp
+} from "./firebase.js";
 
 /* =========================================================
    GLOBAL STATE
@@ -41,6 +63,75 @@ let unsubscribeStatuses = null;
 /* =========================================================
    AUTHENTICATION
 ========================================================= */
+window.googleLogin = async function () {
+
+  const message =
+    document.getElementById("loginMessage");
+
+  try {
+
+    if (message)
+      message.textContent = "Google login होत आहे...";
+
+    const provider =
+      new GoogleAuthProvider();
+
+    const result =
+      await signInWithPopup(
+        auth,
+        provider
+      );
+
+    const user =
+      result.user;
+
+    const userRef =
+      doc(
+        db,
+        "users",
+        user.uid
+      );
+
+    const userSnap =
+      await getDoc(userRef);
+
+    if (!userSnap.exists()) {
+
+      await setDoc(
+        userRef,
+        {
+          uid: user.uid,
+          name:
+            user.displayName ||
+            "Google User",
+          email:
+            user.email || "",
+          role: "student",
+          subject: "",
+          photoURL:
+            user.photoURL || "",
+          createdAt:
+            serverTimestamp()
+        }
+      );
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      "GOOGLE LOGIN ERROR:",
+      error
+    );
+
+    if (message) {
+      message.textContent =
+        getFriendlyError(error);
+    }
+
+  }
+
+};
 
 window.login = async function () {
 
