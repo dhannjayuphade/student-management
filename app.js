@@ -1430,3 +1430,27 @@ window.addTask = async function () {
 
     console.error(
       "ADD TASK:"
+
+      import {
+  getAuth,
+  GoogleAuthProvider,
+  signInWithPopup
+} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
+
+const auth = getAuth();
+const provider = new GoogleAuthProvider();
+
+document.getElementById("googleLogin").addEventListener("click", async () => {
+  try {
+    const result = await signInWithPopup(auth, provider);
+
+    console.log("Logged in:", result.user.displayName);
+
+    // Login झाल्यावर dashboard
+    window.location.href = "dashboard.html";
+
+  } catch (error) {
+    console.error("Google Login Error:", error);
+    alert(error.message);
+  }
+});
