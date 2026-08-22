@@ -11,11 +11,11 @@
 
 <body>
 
-<!-- ================= ROLE SELECT ================= -->
+<!-- ================= START SCREEN ================= -->
 
-<div id="loginPage">
+<div id="startScreen">
 
-  <div class="login-card">
+  <div class="start-card">
 
     <div class="logo">📚</div>
 
@@ -23,66 +23,28 @@
 
     <p>Institute Management System</p>
 
-    <h3>Select Your Role</h3>
+    <h3>Continue as</h3>
 
-    <div class="role-buttons">
+    <div class="role-grid">
 
       <button onclick="selectRole('teacher')">
-        👨‍🏫 Teacher
+        👨‍🏫
+        <span>Teacher</span>
       </button>
 
       <button onclick="selectRole('principal')">
-        🏫 Principal
+        👔
+        <span>Principal</span>
       </button>
 
       <button onclick="selectRole('admin')">
-        🛡️ Admin
+        🛠️
+        <span>Admin</span>
       </button>
 
     </div>
 
-    <div id="loginMessage"></div>
-
-  </div>
-
-</div>
-
-
-<!-- ================= SUBJECT SELECT ================= -->
-
-<div id="subjectPage" class="hidden">
-
-  <div class="login-card">
-
-    <div class="logo">👨‍🏫</div>
-
-    <h2>Teacher</h2>
-
-    <p>Select Subject</p>
-
-    <div class="subject-buttons">
-
-      <button onclick="selectSubject('Physics')">
-        ⚛️ Physics
-      </button>
-
-      <button onclick="selectSubject('Chemistry')">
-        🧪 Chemistry
-      </button>
-
-      <button onclick="selectSubject('Mathematics')">
-        📐 Mathematics
-      </button>
-
-      <button onclick="selectSubject('Biology')">
-        🧬 Biology
-      </button>
-
-    </div>
-
-    <button class="secondary" onclick="backToRoles()">
-      ← Back
-    </button>
+    <div id="startMessage"></div>
 
   </div>
 
@@ -93,21 +55,27 @@
 
 <div id="app" class="hidden">
 
+  <!-- HEADER -->
+
   <header>
 
-    <div>
-      <h1>📚 Student Study Manager</h1>
-      <small id="userInfo"></small>
+    <div class="brand">
+      <div class="brand-icon">📚</div>
+
+      <div>
+        <h1>Student Study Manager</h1>
+        <small id="userInfo">Welcome</small>
+      </div>
     </div>
 
     <button class="logout" onclick="logout()">
-      Logout
+      ↪ Exit
     </button>
 
   </header>
 
 
-  <!-- ================= NAV ================= -->
+  <!-- NAVIGATION -->
 
   <nav>
 
@@ -119,7 +87,7 @@
       👨‍🎓 Students
     </button>
 
-    <button id="teacherNav" onclick="showPage('tasks')">
+    <button id="taskNav" onclick="showPage('tasks')">
       📚 Tasks
     </button>
 
@@ -134,13 +102,18 @@
   </nav>
 
 
+  <!-- MAIN -->
+
   <main>
 
     <!-- ================= DASHBOARD ================= -->
 
     <section id="dashboard" class="page">
 
-      <h2>🏠 Dashboard</h2>
+      <div class="page-title">
+        <h2>🏠 Dashboard</h2>
+        <p>Institute overview</p>
+      </div>
 
       <div class="cards">
 
@@ -170,7 +143,65 @@
 
       </div>
 
-      <div id="dashboardContent"></div>
+      <div class="panel">
+
+        <h3>👋 Welcome</h3>
+
+        <p>
+          Student Study Manager मध्ये
+          विद्यार्थ्यांचे tasks, subjects आणि progress
+          manage करा.
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- ================= SUBJECT ================= -->
+
+    <section id="subjects" class="page hidden">
+
+      <div class="page-title">
+
+        <button class="back-btn" onclick="showPage('dashboard')">
+          ← Back
+        </button>
+
+        <h2 id="subjectTitle">📚 Teacher</h2>
+
+        <p>Select Subject</p>
+
+      </div>
+
+
+      <div class="subject-grid">
+
+        <button onclick="selectSubject('Physics')">
+          ⚛️
+          <strong>Physics</strong>
+          <small>भौतिकशास्त्र</small>
+        </button>
+
+        <button onclick="selectSubject('Chemistry')">
+          🧪
+          <strong>Chemistry</strong>
+          <small>रसायनशास्त्र</small>
+        </button>
+
+        <button onclick="selectSubject('Mathematics')">
+          📐
+          <strong>Mathematics</strong>
+          <small>गणित</small>
+        </button>
+
+        <button onclick="selectSubject('Biology')">
+          🧬
+          <strong>Biology</strong>
+          <small>जीवशास्त्र</small>
+        </button>
+
+      </div>
 
     </section>
 
@@ -179,9 +210,16 @@
 
     <section id="students" class="page hidden">
 
-      <h2>👨‍🎓 Students</h2>
+      <div class="page-title">
 
-      <div id="studentForm" class="form">
+        <h2>👨‍🎓 Students</h2>
+
+        <p>Manage students</p>
+
+      </div>
+
+
+      <div class="form">
 
         <input
           id="studentName"
@@ -210,12 +248,14 @@
 
       </div>
 
+
       <input
         id="studentSearch"
         class="search"
         placeholder="🔎 Search student..."
         oninput="renderStudents()"
       >
+
 
       <div id="studentGrid"></div>
 
@@ -226,47 +266,33 @@
 
     <section id="tasks" class="page hidden">
 
-      <h2>📚 Teacher Tasks</h2>
+      <div class="page-title">
 
-      <div id="taskForm" class="form">
+        <button
+          class="back-btn"
+          onclick="showPage('subjects')"
+        >
+          ← Subjects
+        </button>
 
-        <label>Subject</label>
+        <h2 id="currentSubjectTitle">
+          📚 Tasks
+        </h2>
 
-        <select id="taskSubject">
+        <p>Assign study work</p>
 
-          <option value="Physics">
-            Physics
-          </option>
-
-          <option value="Chemistry">
-            Chemistry
-          </option>
-
-          <option value="Mathematics">
-            Mathematics
-          </option>
-
-          <option value="Biology">
-            Biology
-          </option>
-
-        </select>
+      </div>
 
 
-        <label>Task Type</label>
+      <div class="form">
 
         <select id="taskType">
 
           <option>Class Work</option>
-
           <option>Home Work</option>
-
           <option>Question Answer</option>
-
           <option>Question Paper Solve</option>
-
           <option>CET Questions</option>
-
           <option>Activity</option>
 
         </select>
@@ -291,10 +317,11 @@
 
 
         <button onclick="addTask()">
-          ➕ Assign Task To All Students
+          ➕ Assign Task
         </button>
 
       </div>
+
 
       <div id="taskList"></div>
 
@@ -305,7 +332,13 @@
 
     <section id="people" class="page hidden">
 
-      <h2>👥 Users</h2>
+      <div class="page-title">
+
+        <h2>👥 Users</h2>
+
+        <p>Teachers, Principal and Admin</p>
+
+      </div>
 
       <div id="usersList"></div>
 
@@ -316,7 +349,14 @@
 
     <section id="reports" class="page hidden">
 
-      <h2>📊 Reports</h2>
+      <div class="page-title">
+
+        <h2>📊 Reports</h2>
+
+        <p>Student progress</p>
+
+      </div>
+
 
       <select
         id="reportStudent"
@@ -328,6 +368,7 @@
         </option>
 
       </select>
+
 
       <div id="reportBox"></div>
 
@@ -348,15 +389,15 @@
 
   </main>
 
+
+  <footer>
+    Software created by <b>Dhannjay Uphade</b>
+  </footer>
+
 </div>
-
-
-<footer>
-  Software created by Dhannjay Uphade
-</footer>
 
 
 <script type="module" src="app.js"></script>
 
 </body>
-      </html>
+  </html>
