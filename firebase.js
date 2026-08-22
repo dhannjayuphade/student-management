@@ -1,11 +1,10 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js"; 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-app.js";
+
 import {
   getAuth,
+  signInAnonymously,
   onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
-  updateProfile
+  signOut
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
 
 import {
@@ -25,6 +24,7 @@ import {
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.1.0/firebase-firestore.js";
 
+
 const firebaseConfig = {
   apiKey: "AIzaSyCTIKG1yfUqXoDY7FLDlAJxXvOkaO6-44U",
   authDomain: "student-study-manager.firebaseapp.com",
@@ -35,20 +35,23 @@ const firebaseConfig = {
   measurementId: "G-LSE43DVZNV"
 };
 
+
 const app = initializeApp(firebaseConfig);
 
 const auth = getAuth(app);
+
 const db = getFirestore(app);
+
 
 export {
   app,
   auth,
   db,
+
+  signInAnonymously,
   onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
   signOut,
-  updateProfile,
+
   doc,
   setDoc,
   getDoc,
@@ -56,10 +59,12 @@ export {
   addDoc,
   updateDoc,
   deleteDoc,
+
   collection,
   query,
   where,
   orderBy,
   onSnapshot,
+
   serverTimestamp
 };
