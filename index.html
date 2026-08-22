@@ -13,6 +13,462 @@
 
 <!-- ================= START SCREEN ================= -->
 
+  <div id="roleScreen" class="screen">
+  <div class="login-card">
+
+    <div class="logo">📚</div>
+
+    <h1>Student Study Manager</h1>
+    <p>Institute Management System</p>
+
+    <h2>Continue as</h2>
+
+    <button class="role-btn teacher"
+            onclick="selectRole('teacher')">
+      👨‍🏫
+      <span>Teacher</span>
+    </button>
+
+    <button class="role-btn"
+            onclick="selectRole('principal')">
+      🧑‍💼
+      <span>Principal</span>
+    </button>
+
+    <button class="role-btn"
+            onclick="selectRole('admin')">
+      🛠️
+      <span>Admin</span>
+    </button>
+
+  </div>
+</div>
+
+
+<!-- SUBJECT SCREEN -->
+
+<div id="subjectScreen" class="screen hidden">
+
+  <div class="login-card">
+
+    <button class="back-btn" onclick="backToRoles()">
+      ← Back
+    </button>
+
+    <div class="logo">📚</div>
+
+    <h1 id="selectedRoleTitle">Teacher</h1>
+
+    <p>Select Subject</p>
+
+    <div class="subject-grid">
+
+      <button onclick="selectSubject('Physics')">
+        ⚡<br>
+        Physics
+      </button>
+
+      <button onclick="selectSubject('Chemistry')">
+        🧪<br>
+        Chemistry
+      </button>
+
+      <button onclick="selectSubject('Mathematics')">
+        📐<br>
+        Mathematics
+      </button>
+
+      <button onclick="selectSubject('Biology')">
+        🧬<br>
+        Biology
+      </button>
+
+    </div>
+
+  </div>
+</div>
+
+
+<!-- MAIN APP -->
+
+<div id="app" class="hidden">
+
+  <header>
+    <div>
+      <h1>📚 Student Study Manager</h1>
+      <small id="userInfo"></small>
+    </div>
+
+    <button onclick="backToRoles()">
+      Change Role
+    </button>
+  </header>
+
+  <nav>
+
+    <button onclick="showPage('dashboard')">
+      🏠 Dashboard
+    </button>
+
+    <button onclick="showPage('tasks')">
+      📚 Tasks
+    </button>
+
+    <button onclick="showPage('students')">
+      👨‍🎓 Students
+    </button>
+
+    <button onclick="showPage('reports')">
+      📊 Reports
+    </button>
+
+  </nav>
+
+  <main>
+
+    <section id="dashboard" class="page">
+      <h2>🏠 Dashboard</h2>
+
+      <div class="cards">
+
+        <div class="card">
+          👨‍🎓
+          <b id="totalStudents">0</b>
+          <p>Students</p>
+        </div>
+
+        <div class="card">
+          📚
+          <b id="totalTasks">0</b>
+          <p>Tasks</p>
+        </div>
+
+      </div>
+    </section>
+
+
+    <section id="tasks" class="page hidden">
+
+      <h2>📚 <span id="subjectName"></span> Tasks</h2>
+
+      <div class="form">
+
+        <select id="taskType">
+          <option>Class Work</option>
+          <option>Home Work</option>
+          <option>Question Answer</option>
+          <option>Question Paper Solve</option>
+          <option>CET Questions</option>
+          <option>Activity</option>
+        </select>
+
+        <input
+          id="taskTitle"
+          placeholder="Task / Chapter"
+        >
+
+        <textarea
+          id="taskDescription"
+          placeholder="Task description"
+        ></textarea>
+
+        <input
+          id="taskDate"
+          type="date"
+        >
+
+        <button onclick="addTask()">
+          ➕ Assign Task
+        </button>
+
+      </div>
+
+      <div id="taskList"></div>
+
+    </section>
+
+
+    <section id="students" class="page hidden">
+
+      <h2>👨‍🎓 Students</h2>
+
+      <div class="form">
+
+        <input
+          id="studentName"
+          placeholder="Student Name"
+        >
+
+        <input
+          id="rollNo"
+          type="number"
+          placeholder="Roll Number"
+        >
+
+        <input
+          id="studentPhone"
+          placeholder="Phone Number"
+        >
+
+        <input
+          id="studentClass"
+          placeholder="Class / Batch"
+        >
+
+        <button onclick="addStudent()">
+          ➕ Add Student
+        </button>
+
+      </div>
+
+      <div id="studentGrid"></div>
+
+    </section>
+
+
+    <section id="reports" class="page hidden">
+
+      <h2>📊 Reports</h2>
+
+      <div id="reportBox">
+        Select a section from above.
+      </div>
+
+    </section>
+
+  </main>
+
+</div>
+
+<script type="module" src="app.js"></script>
+<div id="roleScreen" class="screen">
+  <div class="login-card">
+
+    <div class="logo">📚</div>
+
+    <h1>Student Study Manager</h1>
+    <p>Institute Management System</p>
+
+    <h2>Continue as</h2>
+
+    <button class="role-btn teacher"
+            onclick="selectRole('teacher')">
+      👨‍🏫
+      <span>Teacher</span>
+    </button>
+
+    <button class="role-btn"
+            onclick="selectRole('principal')">
+      🧑‍💼
+      <span>Principal</span>
+    </button>
+
+    <button class="role-btn"
+            onclick="selectRole('admin')">
+      🛠️
+      <span>Admin</span>
+    </button>
+
+  </div>
+</div>
+
+
+<!-- SUBJECT SCREEN -->
+
+<div id="subjectScreen" class="screen hidden">
+
+  <div class="login-card">
+
+    <button class="back-btn" onclick="backToRoles()">
+      ← Back
+    </button>
+
+    <div class="logo">📚</div>
+
+    <h1 id="selectedRoleTitle">Teacher</h1>
+
+    <p>Select Subject</p>
+
+    <div class="subject-grid">
+
+      <button onclick="selectSubject('Physics')">
+        ⚡<br>
+        Physics
+      </button>
+
+      <button onclick="selectSubject('Chemistry')">
+        🧪<br>
+        Chemistry
+      </button>
+
+      <button onclick="selectSubject('Mathematics')">
+        📐<br>
+        Mathematics
+      </button>
+
+      <button onclick="selectSubject('Biology')">
+        🧬<br>
+        Biology
+      </button>
+
+    </div>
+
+  </div>
+</div>
+
+
+<!-- MAIN APP -->
+
+<div id="app" class="hidden">
+
+  <header>
+    <div>
+      <h1>📚 Student Study Manager</h1>
+      <small id="userInfo"></small>
+    </div>
+
+    <button onclick="backToRoles()">
+      Change Role
+    </button>
+  </header>
+
+  <nav>
+
+    <button onclick="showPage('dashboard')">
+      🏠 Dashboard
+    </button>
+
+    <button onclick="showPage('tasks')">
+      📚 Tasks
+    </button>
+
+    <button onclick="showPage('students')">
+      👨‍🎓 Students
+    </button>
+
+    <button onclick="showPage('reports')">
+      📊 Reports
+    </button>
+
+  </nav>
+
+  <main>
+
+    <section id="dashboard" class="page">
+      <h2>🏠 Dashboard</h2>
+
+      <div class="cards">
+
+        <div class="card">
+          👨‍🎓
+          <b id="totalStudents">0</b>
+          <p>Students</p>
+        </div>
+
+        <div class="card">
+          📚
+          <b id="totalTasks">0</b>
+          <p>Tasks</p>
+        </div>
+
+      </div>
+    </section>
+
+
+    <section id="tasks" class="page hidden">
+
+      <h2>📚 <span id="subjectName"></span> Tasks</h2>
+
+      <div class="form">
+
+        <select id="taskType">
+          <option>Class Work</option>
+          <option>Home Work</option>
+          <option>Question Answer</option>
+          <option>Question Paper Solve</option>
+          <option>CET Questions</option>
+          <option>Activity</option>
+        </select>
+
+        <input
+          id="taskTitle"
+          placeholder="Task / Chapter"
+        >
+
+        <textarea
+          id="taskDescription"
+          placeholder="Task description"
+        ></textarea>
+
+        <input
+          id="taskDate"
+          type="date"
+        >
+
+        <button onclick="addTask()">
+          ➕ Assign Task
+        </button>
+
+      </div>
+
+      <div id="taskList"></div>
+
+    </section>
+
+
+    <section id="students" class="page hidden">
+
+      <h2>👨‍🎓 Students</h2>
+
+      <div class="form">
+
+        <input
+          id="studentName"
+          placeholder="Student Name"
+        >
+
+        <input
+          id="rollNo"
+          type="number"
+          placeholder="Roll Number"
+        >
+
+        <input
+          id="studentPhone"
+          placeholder="Phone Number"
+        >
+
+        <input
+          id="studentClass"
+          placeholder="Class / Batch"
+        >
+
+        <button onclick="addStudent()">
+          ➕ Add Student
+        </button>
+
+      </div>
+
+      <div id="studentGrid"></div>
+
+    </section>
+
+
+    <section id="reports" class="page hidden">
+
+      <h2>📊 Reports</h2>
+
+      <div id="reportBox">
+        Select a section from above.
+      </div>
+
+    </section>
+
+  </main>
+
+</div>
+
+<script type="module" src="app.js"></script>
 <div id="startScreen">
 
   <div class="start-card">
