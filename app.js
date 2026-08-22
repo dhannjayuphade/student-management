@@ -1,11 +1,14 @@
 import {
   auth,
   db,
-  signInAnonymously,
+  onAuthStateChanged,
+  signOut,
   doc,
   setDoc,
+  getDoc,
   addDoc,
   updateDoc,
+  deleteDoc,
   collection,
   onSnapshot,
   serverTimestamp
@@ -19,13 +22,13 @@ import {
 let currentUser = null;
 let currentUserData = null;
 
+let currentRole = "";
+let currentSubject = "";
+
 let students = [];
 let users = [];
 let tasks = [];
 let statuses = [];
-
-let selectedRole = "";
-let selectedSubject = "";
 
 let unsubscribeUsers = null;
 let unsubscribeStudents = null;
@@ -34,323 +37,255 @@ let unsubscribeStatuses = null;
 
 
 /* =========================================================
-   START
-========================================================= */
-
-document.addEventListener(
-  "DOMContentLoaded",
-  () => {
-
-    showRoleScreen();
-
-  }
-);
-
-
-/* =========================================================
-   SCREEN HELPERS
-========================================================= */
-
-function show(id) {
-
-  const element =
-    document.getElementById(id);
-
-  if (element) {
-
-    element.classList.remove("hidden");
-
-  }
-
-}
-
-
-function hide(id) {
-
-  const element =
-    document.getElementById(id);
-
-  if (element) {
-
-    element.classList.add("hidden");
-
-  }
-
-}
-
-
-function setText(id, value) {
-
-  const element =
-    document.getElementById(id);
-
-  if (element) {
-
-    element.textContent = value;
-
-  }
-
-}
-
-
-function clearValue(id) {
-
-  const element =
-    document.getElementById(id);
-
-  if (element) {
-
-    element.value = "";
-
-  }
-
-}
-
-
-function escapeHTML(value) {
-
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-
-}
-
-
-/* =========================================================
    ROLE SELECTION
 ========================================================= */
 
-function showRoleScreen() {
-
-  hide("app");
-  hide("subjectPage");
-  show("loginPage");
-
-}
-
-
 window.selectRole = async function(role) {
 
-  selectedRole = role;
+  currentRole = role;
 
-  if (role === "teacher") {
+  const message =
+    document.getElementById("startMessage");
 
-    hide("loginPage");
-    show("subjectPage");
-
-    return;
-
+  if (message) {
+    message.textContent =
+      `${roleLabel(role)} selected...`;
   }
 
+  /*
+    या demo version मध्ये Firebase Auth login
+    required नाही.
 
-  if (
-    role === "principal" ||
-    role === "admin"
-  ) {
-
-    await startDemoSession(
-      role,
-      ""
-    );
-
-  }
-
-};
-
-
-/* =========================================================
-   SUBJECT
-========================================================= */
-
-window.selectSubject = async function(subject) {
-
-  selectedSubject = subject;
-
-  await startDemoSession(
-    "teacher",
-    subject
-  );
-
-};
-
-
-window.backToRoles = function() {
-
-  selectedRole = "";
-  selectedSubject = "";
-
-  hide("subjectPage");
-  show("loginPage");
-
-};
-
-
-/* =========================================================
-   DEMO SESSION
-========================================================= */
-
-async function startDemoSession(
-  role,
-  subject
-) {
+    Anonymous demo user तयार केला जातो.
+  */
 
   try {
 
-    setText(
-      "loginMessage",
-      "System सुरू होत आहे..."
-    );
+    let uid =
+      localStorage.getItem("demoUserId");
 
+    if (!uid) {
 
-    /*
-      Invisible Firebase authentication.
-      User ला password / Google login
-      विचारला जात नाही.
-    */
+      uid =
+        "demo_" +
+        role +
+        "_" +
+        Date.now();
 
-    if (!auth.currentUser) {
-
-      await signInAnonymously(auth);
-
+      localStorage.setItem(
+        "demoUserId",
+        uid
+      );
     }
 
-
-    currentUser =
-      auth.currentUser;
-
-
-    currentUserData = {
-
-      uid:
-        currentUser.uid,
-
-      name:
-        role === "teacher"
-          ? `Teacher • ${subject}`
-          : role === "principal"
-            ? "Principal"
-            : "Admin",
-
-      role:
-        role,
-
-      subject:
-        subject || ""
-
+    currentUser = {
+      uid: uid,
+      displayName: roleLabel(role)
     };
 
-
-    /*
-      Firebase users collection मध्ये
-      current demo session save/update.
-    */
-
-    await setDoc(
-
+    const userRef =
       doc(
         db,
         "users",
-        currentUser.uid
-      ),
+        uid
+      );
 
-      {
+    const userSnap =
+      await getDoc(userRef);
 
-        uid:
-          currentUser.uid,
+    if (!userSnap.exists()) {
 
-        name:
-          currentUserData.name,
+      await setDoc(
+        userRef,
+        {
+          uid: uid,
+          name: roleLabel(role),
+          role: role,
+          email: "",
+          subject: "",
+          demo: true,
+          createdAt:
+            serverTimestamp()
+        }
+      );
 
-        role:
-          role,
+    }
 
-        subject:
-          subject || "",
+    currentUserData =
+      (
+        await getDoc(userRef)
+      ).data();
 
-        demo:
-          true,
+    openApp();
 
-        updatedAt:
-          serverTimestamp()
-
-      },
-
-      {
-        merge: true
-      }
-
-    );
-
-
-    hide("loginPage");
-    hide("subjectPage");
-    show("app");
-
-
-    updateUserInfo();
-
-    setupPermissions();
-
-    startListeners();
-
-    showPage("dashboard");
-
-
-  } catch (error) {
+  } catch(error) {
 
     console.error(
-      "SESSION ERROR:",
+      "ROLE ERROR:",
       error
     );
 
-
-    alert(
-      getFriendlyError(error)
-    );
+    if (message) {
+      message.textContent =
+        friendlyError(error);
+    }
 
   }
+
+};
+
+
+/* =========================================================
+   ROLE LABEL
+========================================================= */
+
+function roleLabel(role) {
+
+  const labels = {
+
+    teacher: "Teacher",
+
+    principal: "Principal",
+
+    admin: "Admin"
+
+  };
+
+  return labels[role] || role;
 
 }
 
 
 /* =========================================================
-   USER INFO
+   OPEN APP
 ========================================================= */
 
-function updateUserInfo() {
+function openApp() {
 
-  const role =
-    currentUserData?.role || "";
+  const start =
+    document.getElementById(
+      "startScreen"
+    );
 
-  const subject =
-    currentUserData?.subject || "";
+  const app =
+    document.getElementById(
+      "app"
+    );
+
+  if (start)
+    start.classList.add("hidden");
+
+  if (app)
+    app.classList.remove("hidden");
 
 
-  let text =
-    currentUserData?.name ||
-    "User";
+  const info =
+    document.getElementById(
+      "userInfo"
+    );
 
+  if (info) {
 
-  if (
-    role === "teacher" &&
-    subject
-  ) {
-
-    text +=
-      ` • ${subject}`;
+    info.textContent =
+      `${roleLabel(currentRole)}`;
 
   }
 
 
-  setText(
-    "userInfo",
-    text
-  );
+  setupPermissions();
+
+  startListeners();
+
+  showPage("dashboard");
+
+  updateDashboard();
 
 }
+
+
+/* =========================================================
+   LOGOUT / EXIT
+========================================================= */
+
+window.logout = async function() {
+
+  stopListeners();
+
+  currentUser = null;
+  currentUserData = null;
+  currentRole = "";
+  currentSubject = "";
+
+  localStorage.removeItem(
+    "demoUserId"
+  );
+
+  document
+    .getElementById("app")
+    ?.classList.add("hidden");
+
+  document
+    .getElementById("startScreen")
+    ?.classList.remove("hidden");
+
+};
+
+
+/* =========================================================
+   AUTH STATE
+========================================================= */
+
+/*
+  जर Firebase मध्ये आधीपासून authenticated user असेल
+  तर त्याला automatically वापरता येईल.
+
+  Demo role system साठी login आवश्यक नाही.
+*/
+
+onAuthStateChanged(
+  auth,
+  async user => {
+
+    if (!user)
+      return;
+
+    try {
+
+      currentUser = user;
+
+      const snap =
+        await getDoc(
+          doc(
+            db,
+            "users",
+            user.uid
+          )
+        );
+
+      if (snap.exists()) {
+
+        currentUserData =
+          snap.data();
+
+        currentRole =
+          currentUserData.role ||
+          "teacher";
+
+        openApp();
+
+      }
+
+    } catch(error) {
+
+      console.error(
+        "AUTH STATE ERROR",
+        error
+      );
+
+    }
+
+  }
+);
 
 
 /* =========================================================
@@ -359,15 +294,10 @@ function updateUserInfo() {
 
 function setupPermissions() {
 
-  const role =
-    currentUserData?.role;
-
-
-  const teacherNav =
+  const taskNav =
     document.getElementById(
-      "teacherNav"
+      "taskNav"
     );
-
 
   const peopleNav =
     document.getElementById(
@@ -375,89 +305,35 @@ function setupPermissions() {
     );
 
 
-  if (teacherNav) {
+  if (taskNav) {
 
-    teacherNav.classList.remove(
+    taskNav.classList.remove(
       "hidden"
     );
 
   }
 
 
-  if (peopleNav) {
+  if (
+    currentRole === "admin" ||
+    currentRole === "principal"
+  ) {
 
-    if (
-      role === "admin" ||
-      role === "principal"
-    ) {
-
+    if (peopleNav)
       peopleNav.classList.remove(
         "hidden"
       );
 
-    } else {
+  } else {
 
+    if (peopleNav)
       peopleNav.classList.add(
         "hidden"
       );
 
-    }
-
-  }
-
-
-  const subjectSelect =
-    document.getElementById(
-      "taskSubject"
-    );
-
-
-  if (
-    subjectSelect &&
-    role === "teacher"
-  ) {
-
-    subjectSelect.value =
-      currentUserData.subject;
-
-    subjectSelect.disabled =
-      true;
-
-  } else if (subjectSelect) {
-
-    subjectSelect.disabled =
-      false;
-
   }
 
 }
-
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-window.logout = function() {
-
-  stopListeners();
-
-  currentUser = null;
-  currentUserData = null;
-
-  students = [];
-  users = [];
-  tasks = [];
-  statuses = [];
-
-  selectedRole = "";
-  selectedSubject = "";
-
-  hide("app");
-  hide("subjectPage");
-
-  show("loginPage");
-
-};
 
 
 /* =========================================================
@@ -473,7 +349,6 @@ function startListeners() {
 
   unsubscribeUsers =
     onSnapshot(
-
       collection(
         db,
         "users"
@@ -484,15 +359,10 @@ function startListeners() {
         users =
           snapshot.docs.map(
             item => ({
-
-              id:
-                item.id,
-
+              id: item.id,
               ...item.data()
-
             })
           );
-
 
         renderUsers();
 
@@ -508,7 +378,6 @@ function startListeners() {
         );
 
       }
-
     );
 
 
@@ -516,7 +385,6 @@ function startListeners() {
 
   unsubscribeStudents =
     onSnapshot(
-
       collection(
         db,
         "students"
@@ -526,28 +394,17 @@ function startListeners() {
 
         students =
           snapshot.docs
-
             .map(
               item => ({
-
-                id:
-                  item.id,
-
+                id: item.id,
                 ...item.data()
-
               })
             )
-
             .sort(
-              (a, b) =>
-                Number(
-                  a.roll || 0
-                ) -
-                Number(
-                  b.roll || 0
-                )
+              (a,b) =>
+                Number(a.roll || 0) -
+                Number(b.roll || 0)
             );
-
 
         renderStudents();
 
@@ -565,7 +422,6 @@ function startListeners() {
         );
 
       }
-
     );
 
 
@@ -573,7 +429,6 @@ function startListeners() {
 
   unsubscribeTasks =
     onSnapshot(
-
       collection(
         db,
         "tasks"
@@ -583,20 +438,14 @@ function startListeners() {
 
         tasks =
           snapshot.docs
-
             .map(
               item => ({
-
-                id:
-                  item.id,
-
+                id: item.id,
                 ...item.data()
-
               })
             )
-
             .sort(
-              (a, b) =>
+              (a,b) =>
                 String(
                   b.date || ""
                 ).localeCompare(
@@ -605,7 +454,6 @@ function startListeners() {
                   )
                 )
             );
-
 
         renderTasks();
 
@@ -621,7 +469,6 @@ function startListeners() {
         );
 
       }
-
     );
 
 
@@ -629,7 +476,6 @@ function startListeners() {
 
   unsubscribeStatuses =
     onSnapshot(
-
       collection(
         db,
         "statuses"
@@ -640,15 +486,10 @@ function startListeners() {
         statuses =
           snapshot.docs.map(
             item => ({
-
-              id:
-                item.id,
-
+              id: item.id,
               ...item.data()
-
             })
           );
-
 
         renderStudents();
 
@@ -664,7 +505,6 @@ function startListeners() {
         );
 
       }
-
     );
 
 }
@@ -731,19 +571,13 @@ window.showPage = function(page) {
 
 
   const selected =
-    document.getElementById(page);
-
-
-  if (!selected) {
-
-    console.warn(
-      "Page not found:",
+    document.getElementById(
       page
     );
 
-    return;
 
-  }
+  if (!selected)
+    return;
 
 
   selected.classList.remove(
@@ -774,21 +608,52 @@ window.showPage = function(page) {
 
 
 /* =========================================================
+   TEACHER → SUBJECT
+========================================================= */
+
+window.selectSubject = function(
+  subject
+) {
+
+  currentSubject =
+    subject;
+
+
+  const title =
+    document.getElementById(
+      "currentSubjectTitle"
+    );
+
+
+  if (title) {
+
+    title.textContent =
+      `📚 ${subject} Tasks`;
+
+  }
+
+
+  showPage("tasks");
+
+  renderTasks();
+
+};
+
+
+/* =========================================================
    ADD STUDENT
 ========================================================= */
 
 window.addStudent = async function() {
-
-  const role =
-    currentUserData?.role;
-
 
   if (
     ![
       "teacher",
       "principal",
       "admin"
-    ].includes(role)
+    ].includes(
+      currentRole
+    )
   ) {
 
     alert(
@@ -850,10 +715,8 @@ window.addStudent = async function() {
 
   const duplicate =
     students.some(
-      student =>
-        Number(
-          student.roll
-        ) === roll
+      s =>
+        Number(s.roll) === roll
     );
 
 
@@ -871,59 +734,72 @@ window.addStudent = async function() {
   try {
 
     await addDoc(
-
       collection(
         db,
         "students"
       ),
-
       {
-
         name,
-
         roll,
-
         phone,
-
         studentClass,
-
         createdBy:
-          currentUser.uid,
-
+          currentUser?.uid ||
+          "demo",
+        createdByRole:
+          currentRole,
         createdAt:
           serverTimestamp()
-
       }
-
     );
 
 
-    clearValue("studentName");
-    clearValue("rollNo");
-    clearValue("studentPhone");
-    clearValue("studentClass");
-
+    clearStudentForm();
 
     alert(
-      "Student successfully added."
+      "Student added successfully."
     );
 
-
-  } catch (error) {
+  } catch(error) {
 
     console.error(
-      "ADD STUDENT:",
+      "ADD STUDENT ERROR",
       error
     );
 
-
     alert(
-      getFriendlyError(error)
+      friendlyError(error)
     );
 
   }
 
 };
+
+
+/* =========================================================
+   CLEAR STUDENT
+========================================================= */
+
+function clearStudentForm() {
+
+  [
+    "studentName",
+    "rollNo",
+    "studentPhone",
+    "studentClass"
+  ].forEach(
+    id => {
+
+      const el =
+        document.getElementById(id);
+
+      if (el)
+        el.value = "";
+
+    }
+  );
+
+}
 
 
 /* =========================================================
@@ -961,20 +837,14 @@ function renderStudents() {
             student.name || ""
           ).toLowerCase();
 
-
         const roll =
           String(
             student.roll || ""
           );
 
-
         return (
-          name.includes(
-            search
-          ) ||
-          roll.includes(
-            search
-          )
+          name.includes(search) ||
+          roll.includes(search)
         );
 
       }
@@ -987,7 +857,9 @@ function renderStudents() {
   if (!filtered.length) {
 
     grid.innerHTML =
-      `<p>No students found.</p>`;
+      `<div class="panel">
+        No students found.
+      </div>`;
 
     return;
 
@@ -996,6 +868,10 @@ function renderStudents() {
 
   filtered.forEach(
     student => {
+
+      const total =
+        tasks.length;
+
 
       const completed =
         tasks.filter(
@@ -1019,21 +895,19 @@ function renderStudents() {
           </div>
 
           <div class="student-name">
-            👨‍🎓
-            ${escapeHTML(
+            👨‍🎓 ${escapeHTML(
               student.name
             )}
           </div>
 
           <p>
             ${escapeHTML(
-              student.studentClass ||
-              "-"
+              student.studentClass || "-"
             )}
           </p>
 
           <small>
-            🟢 ${completed}/${tasks.length}
+            🟢 ${completed}/${total}
             Complete
           </small>
 
@@ -1057,8 +931,8 @@ window.openStudent = function(
 
   const student =
     students.find(
-      item =>
-        item.id === studentId
+      s =>
+        s.id === studentId
     );
 
 
@@ -1069,13 +943,13 @@ window.openStudent = function(
   showPage("profile");
 
 
-  const profile =
+  const box =
     document.getElementById(
       "profileBox"
     );
 
 
-  if (!profile)
+  if (!box)
     return;
 
 
@@ -1086,54 +960,54 @@ window.openStudent = function(
       <div class="profile-header">
 
         <h2>
-          👨‍🎓
-          ${escapeHTML(
+          👨‍🎓 ${escapeHTML(
             student.name
           )}
         </h2>
 
         <p>
-          Roll No:
-          ${student.roll}
+          Roll No: ${student.roll}
         </p>
 
         <p>
           Class:
           ${escapeHTML(
-            student.studentClass ||
-            "-"
+            student.studentClass || "-"
           )}
         </p>
 
         <p>
-          📞
+          Phone:
           ${escapeHTML(
-            student.phone ||
-            "-"
+            student.phone || "-"
           )}
         </p>
 
       </div>
 
-      <h3>
-        📚 Assigned Tasks
-      </h3>
+      <h3>📚 Tasks</h3>
 
   `;
 
 
-  if (!tasks.length) {
+  const studentTasks =
+    tasks.filter(
+      task =>
+        !task.subject ||
+        task.subject === currentSubject ||
+        currentSubject === ""
+    );
 
-    html += `
-      <p>
-        अजून कोणताही task नाही.
-      </p>
-    `;
+
+  if (!studentTasks.length) {
+
+    html +=
+      `<p>No tasks assigned.</p>`;
 
   }
 
 
-  tasks.forEach(
+  studentTasks.forEach(
     task => {
 
       const status =
@@ -1145,11 +1019,10 @@ window.openStudent = function(
 
       html += `
 
-        <div class="task">
+        <div class="profile-task">
 
           <h3>
-            📚
-            ${escapeHTML(
+            📚 ${escapeHTML(
               task.title
             )}
           </h3>
@@ -1157,49 +1030,39 @@ window.openStudent = function(
           <p>
             Subject:
             ${escapeHTML(
-              task.subject ||
-              "-"
+              task.subject || "-"
             )}
           </p>
 
           <p>
             Type:
             ${escapeHTML(
-              task.type ||
-              "-"
+              task.type || "-"
             )}
           </p>
 
           <p>
-            📅
+            Date:
             ${escapeHTML(
-              task.date ||
-              "-"
+              task.date || "-"
             )}
           </p>
 
           <p>
             ${escapeHTML(
-              task.description ||
-              ""
+              task.description || ""
             )}
           </p>
 
           <strong>
             Status:
-            ${escapeHTML(
-              status
-            )}
+            ${escapeHTML(status)}
           </strong>
 
-          ${
-            canEditTaskStatus(task)
-              ? getStatusButtons(
-                  student.id,
-                  task.id
-                )
-              : ""
-          }
+          ${getStatusButtons(
+            student.id,
+            task.id
+          )}
 
         </div>
 
@@ -1209,12 +1072,9 @@ window.openStudent = function(
   );
 
 
-  html += `
-    </div>
-  `;
+  html += `</div>`;
 
-
-  profile.innerHTML =
+  box.innerHTML =
     html;
 
 };
@@ -1231,11 +1091,9 @@ function getStatus(
 
   const found =
     statuses.find(
-      status =>
-        status.studentId ===
-          studentId &&
-        status.taskId ===
-          taskId
+      item =>
+        item.studentId === studentId &&
+        item.taskId === taskId
     );
 
 
@@ -1245,38 +1103,9 @@ function getStatus(
 }
 
 
-function canEditTaskStatus(
-  task
-) {
-
-  const role =
-    currentUserData?.role;
-
-
-  if (
-    role === "admin" ||
-    role === "principal"
-  ) {
-
-    return true;
-
-  }
-
-
-  if (role === "teacher") {
-
-    return (
-      task.subject ===
-      currentUserData.subject
-    );
-
-  }
-
-
-  return false;
-
-}
-
+/* =========================================================
+   STATUS BUTTONS
+========================================================= */
 
 function getStatusButtons(
   studentId,
@@ -1353,82 +1182,59 @@ window.setStatus = async function(
     const existing =
       statuses.find(
         item =>
-          item.studentId ===
-            studentId &&
-          item.taskId ===
-            taskId
+          item.studentId === studentId &&
+          item.taskId === taskId
       );
 
 
     if (existing) {
 
       await updateDoc(
-
         doc(
           db,
           "statuses",
           existing.id
         ),
-
         {
-
           status,
-
-          updatedBy:
-            currentUser.uid,
-
           updatedAt:
-            serverTimestamp()
-
+            serverTimestamp(),
+          updatedBy:
+            currentUser?.uid ||
+            "demo"
         }
-
       );
 
     } else {
 
       await addDoc(
-
         collection(
           db,
           "statuses"
         ),
-
         {
-
           studentId,
-
           taskId,
-
           status,
-
           updatedBy:
-            currentUser.uid,
-
+            currentUser?.uid ||
+            "demo",
           createdAt:
             serverTimestamp()
-
         }
-
       );
 
     }
 
-
-    openStudent(
-      studentId
-    );
-
-
-  } catch (error) {
+  } catch(error) {
 
     console.error(
-      "STATUS ERROR:",
+      "STATUS ERROR",
       error
     );
 
-
     alert(
-      getFriendlyError(error)
+      friendlyError(error)
     );
 
   }
@@ -1442,33 +1248,17 @@ window.setStatus = async function(
 
 window.addTask = async function() {
 
-  const role =
-    currentUserData?.role;
-
-
-  if (
-    ![
-      "teacher",
-      "principal",
-      "admin"
-    ].includes(role)
-  ) {
+  if (!currentSubject) {
 
     alert(
-      "Task add करण्याची permission नाही."
+      "पहिले Subject select करा."
     );
+
+    showPage("subjects");
 
     return;
 
   }
-
-
-  let subject =
-    document
-      .getElementById(
-        "taskSubject"
-      )
-      ?.value;
 
 
   const type =
@@ -1505,21 +1295,10 @@ window.addTask = async function() {
       ?.value;
 
 
-  if (
-    role === "teacher" &&
-    currentUserData.subject
-  ) {
-
-    subject =
-      currentUserData.subject;
-
-  }
-
-
   if (!title) {
 
     alert(
-      "Task / Chapter टाका."
+      "Task / Chapter लिहा."
     );
 
     return;
@@ -1530,10 +1309,102 @@ window.addTask = async function() {
   try {
 
     await addDoc(
-
       collection(
         db,
         "tasks"
       ),
+      {
+        subject:
+          currentSubject,
+        type:
+          type,
+        title:
+          title,
+        description:
+          description,
+        date:
+          date,
+        createdBy:
+          currentUser?.uid ||
+          "demo",
+        createdByRole:
+          currentRole,
+        createdAt:
+          serverTimestamp()
+      }
+    );
 
-   
+
+    document.getElementById(
+      "taskTitle"
+    ).value = "";
+
+    document.getElementById(
+      "taskDescription"
+    ).value = "";
+
+    document.getElementById(
+      "taskDate"
+    ).value = "";
+
+
+    alert(
+      `${currentSubject} task saved.`
+    );
+
+  } catch(error) {
+
+    console.error(
+      "ADD TASK ERROR",
+      error
+    );
+
+    alert(
+      friendlyError(error)
+    );
+
+  }
+
+};
+
+
+/* =========================================================
+   RENDER TASKS
+========================================================= */
+
+function renderTasks() {
+
+  const list =
+    document.getElementById(
+      "taskList"
+    );
+
+
+  if (!list)
+    return;
+
+
+  let filtered =
+    tasks;
+
+
+  if (currentSubject) {
+
+    filtered =
+      tasks.filter(
+        task =>
+          task.subject ===
+          currentSubject
+      );
+
+  }
+
+
+  list.innerHTML = "";
+
+
+  if (!filtered.length) {
+
+    list.innerHTML =
+      `<div class="panel">
+        📚 No tas
