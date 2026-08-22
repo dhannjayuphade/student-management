@@ -1,46 +1,16 @@
 import {
   auth,
   db,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signOut,
+  signInAnonymously,
   doc,
   setDoc,
-  getDoc,
-  getDocs,
   addDoc,
   updateDoc,
-  deleteDoc,
   collection,
-  query,
-  where,
   onSnapshot,
   serverTimestamp
 } from "./firebase.js";
 
-import {
-  auth,
-  db,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
-  signOut,
-  doc,
-  setDoc,
-  getDoc,
-  getDocs,
-  addDoc,
-  updateDoc,
-  deleteDoc,
-  collection,
-  query,
-  where,
-  onSnapshot,
-  serverTimestamp
-} from "./firebase.js";
 
 /* =========================================================
    GLOBAL STATE
@@ -54,6 +24,9 @@ let users = [];
 let tasks = [];
 let statuses = [];
 
+let selectedRole = "";
+let selectedSubject = "";
+
 let unsubscribeUsers = null;
 let unsubscribeStudents = null;
 let unsubscribeTasks = null;
@@ -61,423 +34,323 @@ let unsubscribeStatuses = null;
 
 
 /* =========================================================
-   AUTHENTICATION
-========================================================= */
-window.googleLogin = async function () {
-
-  const message =
-    document.getElementById("loginMessage");
-
-  try {
-
-    if (message)
-      message.textContent = "Google login होत आहे...";
-
-    const provider =
-      new GoogleAuthProvider();
-
-    const result =
-      await signInWithPopup(
-        auth,
-        provider
-      );
-
-    const user =
-      result.user;
-
-    const userRef =
-      doc(
-        db,
-        "users",
-        user.uid
-      );
-
-    const userSnap =
-      await getDoc(userRef);
-
-    if (!userSnap.exists()) {
-
-      await setDoc(
-        userRef,
-        {
-          uid: user.uid,
-          name:
-            user.displayName ||
-            "Google User",
-          email:
-            user.email || "",
-          role: "student",
-          subject: "",
-          photoURL:
-            user.photoURL || "",
-          createdAt:
-            serverTimestamp()
-        }
-      );
-
-    }
-
-  } catch (error) {
-
-    console.error(
-      "GOOGLE LOGIN ERROR:",
-      error
-    );
-
-    if (message) {
-      message.textContent =
-        getFriendlyError(error);
-    }
-
-  }
-
-};
-
-window.login = async function () {
-
-  const emailInput =
-    document.getElementById("loginEmail");
-
-  const passwordInput =
-    document.getElementById("loginPassword");
-
-  const message =
-    document.getElementById("loginMessage");
-
-  const email =
-    emailInput?.value.trim();
-
-  const password =
-    passwordInput?.value || "";
-
-  if (!email || !password) {
-
-    if (message) {
-      message.textContent =
-        "Email आणि password टाका.";
-    }
-
-    return;
-  }
-
-  if (message) {
-    message.textContent =
-      "Logging in...";
-  }
-
-  try {
-
-    await signInWithEmailAndPassword(
-      auth,
-      email,
-      password
-    );
-
-  } catch (error) {
-
-    console.error("LOGIN ERROR:", error);
-
-    if (message) {
-      message.textContent =
-        getFriendlyError(error);
-    }
-  }
-};
-
-
-/* =========================================================
-   REGISTER
+   START
 ========================================================= */
 
-window.register = async function () {
-
-  const name =
-    document.getElementById("regName")?.value.trim();
-
-  const email =
-    document.getElementById("regEmail")?.value.trim();
-
-  const password =
-    document.getElementById("regPassword")?.value || "";
-
-  const role =
-    document.getElementById("regRole")?.value;
-
-  const message =
-    document.getElementById("registerMessage");
-
-
-  if (!name || !email || !password) {
-
-    if (message) {
-      message.textContent =
-        "सर्व fields भरा.";
-    }
-
-    return;
-  }
-
-
-  if (password.length < 6) {
-
-    if (message) {
-      message.textContent =
-        "Password किमान 6 characters असावा.";
-    }
-
-    return;
-  }
-
-
-  if (message) {
-    message.textContent =
-      "Account तयार होत आहे...";
-  }
-
-
-  try {
-
-    const result =
-      await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-
-
-    await setDoc(
-      doc(
-        db,
-        "users",
-        result.user.uid
-      ),
-      {
-        uid: result.user.uid,
-        name: name,
-        email: email,
-        role: role,
-        subject:
-          role === "teacher"
-            ? "Physics"
-            : "",
-        createdAt:
-          serverTimestamp()
-      }
-    );
-
-
-    if (message) {
-      message.textContent =
-        "Account तयार झाले.";
-    }
-
-  } catch (error) {
-
-    console.error(
-      "REGISTER ERROR:",
-      error
-    );
-
-    if (message) {
-      message.textContent =
-        getFriendlyError(error);
-    }
-  }
-};
-
-
-/* =========================================================
-   LOGOUT
-========================================================= */
-
-window.logout = async function () {
-
-  try {
-
-    await signOut(auth);
-
-  } catch (error) {
-
-    console.error(
-      "LOGOUT ERROR:",
-      error
-    );
-
-  }
-
-};
-
-
-/* =========================================================
-   LOGIN / REGISTER UI
-========================================================= */
-
-window.showRegister = function () {
-
-  const loginPage =
-    document.getElementById("loginPage");
-
-  const registerPage =
-    document.getElementById("registerPage");
-
-  if (loginPage)
-    loginPage.classList.add("hidden");
-
-  if (registerPage)
-    registerPage.classList.remove("hidden");
-};
-
-
-window.showLogin = function () {
-
-  const loginPage =
-    document.getElementById("loginPage");
-
-  const registerPage =
-    document.getElementById("registerPage");
-
-  if (registerPage)
-    registerPage.classList.add("hidden");
-
-  if (loginPage)
-    loginPage.classList.remove("hidden");
-};
-
-
-/* =========================================================
-   AUTH STATE
-========================================================= */
-
-onAuthStateChanged(
-  auth,
-  async user => {
-
-    console.log(
-      "AUTH STATE:",
-      user
-    );
-
-
-    if (!user) {
-
-      currentUser = null;
-      currentUserData = null;
-
-      stopListeners();
-
-      const app =
-        document.getElementById("app");
-
-      const loginPage =
-        document.getElementById("loginPage");
-
-      const registerPage =
-        document.getElementById("registerPage");
-
-
-      if (app)
-        app.classList.add("hidden");
-
-      if (registerPage)
-        registerPage.classList.add("hidden");
-
-      if (loginPage)
-        loginPage.classList.remove("hidden");
-
-      return;
-    }
-
-
-    currentUser = user;
-
-
-    try {
-
-      const userSnap =
-        await getDoc(
-          doc(
-            db,
-            "users",
-            user.uid
-          )
-        );
-
-
-      if (!userSnap.exists()) {
-
-        alert(
-          "User profile Firestore मध्ये सापडले नाही."
-        );
-
-        await signOut(auth);
-
-        return;
-      }
-
-
-      currentUserData =
-        userSnap.data();
-
-
-      console.log(
-        "USER PROFILE:",
-        currentUserData
-      );
-
-
-      const loginPage =
-        document.getElementById("loginPage");
-
-      const registerPage =
-        document.getElementById("registerPage");
-
-      const app =
-        document.getElementById("app");
-
-
-      if (loginPage)
-        loginPage.classList.add("hidden");
-
-      if (registerPage)
-        registerPage.classList.add("hidden");
-
-      if (app)
-        app.classList.remove("hidden");
-
-
-      const userInfo =
-        document.getElementById("userInfo");
-
-
-      if (userInfo) {
-
-        userInfo.textContent =
-          `${currentUserData.name || "User"} • ${currentUserData.role || "student"}`;
-
-      }
-
-
-      setupPermissions();
-
-      startListeners();
-
-      showPage("dashboard");
-
-    } catch (error) {
-
-      console.error(
-        "AUTH PROFILE ERROR:",
-        error
-      );
-
-      alert(
-        getFriendlyError(error)
-      );
-
-    }
+document.addEventListener(
+  "DOMContentLoaded",
+  () => {
+
+    showRoleScreen();
 
   }
 );
+
+
+/* =========================================================
+   SCREEN HELPERS
+========================================================= */
+
+function show(id) {
+
+  const element =
+    document.getElementById(id);
+
+  if (element) {
+
+    element.classList.remove("hidden");
+
+  }
+
+}
+
+
+function hide(id) {
+
+  const element =
+    document.getElementById(id);
+
+  if (element) {
+
+    element.classList.add("hidden");
+
+  }
+
+}
+
+
+function setText(id, value) {
+
+  const element =
+    document.getElementById(id);
+
+  if (element) {
+
+    element.textContent = value;
+
+  }
+
+}
+
+
+function clearValue(id) {
+
+  const element =
+    document.getElementById(id);
+
+  if (element) {
+
+    element.value = "";
+
+  }
+
+}
+
+
+function escapeHTML(value) {
+
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+}
+
+
+/* =========================================================
+   ROLE SELECTION
+========================================================= */
+
+function showRoleScreen() {
+
+  hide("app");
+  hide("subjectPage");
+  show("loginPage");
+
+}
+
+
+window.selectRole = async function(role) {
+
+  selectedRole = role;
+
+  if (role === "teacher") {
+
+    hide("loginPage");
+    show("subjectPage");
+
+    return;
+
+  }
+
+
+  if (
+    role === "principal" ||
+    role === "admin"
+  ) {
+
+    await startDemoSession(
+      role,
+      ""
+    );
+
+  }
+
+};
+
+
+/* =========================================================
+   SUBJECT
+========================================================= */
+
+window.selectSubject = async function(subject) {
+
+  selectedSubject = subject;
+
+  await startDemoSession(
+    "teacher",
+    subject
+  );
+
+};
+
+
+window.backToRoles = function() {
+
+  selectedRole = "";
+  selectedSubject = "";
+
+  hide("subjectPage");
+  show("loginPage");
+
+};
+
+
+/* =========================================================
+   DEMO SESSION
+========================================================= */
+
+async function startDemoSession(
+  role,
+  subject
+) {
+
+  try {
+
+    setText(
+      "loginMessage",
+      "System सुरू होत आहे..."
+    );
+
+
+    /*
+      Invisible Firebase authentication.
+      User ला password / Google login
+      विचारला जात नाही.
+    */
+
+    if (!auth.currentUser) {
+
+      await signInAnonymously(auth);
+
+    }
+
+
+    currentUser =
+      auth.currentUser;
+
+
+    currentUserData = {
+
+      uid:
+        currentUser.uid,
+
+      name:
+        role === "teacher"
+          ? `Teacher • ${subject}`
+          : role === "principal"
+            ? "Principal"
+            : "Admin",
+
+      role:
+        role,
+
+      subject:
+        subject || ""
+
+    };
+
+
+    /*
+      Firebase users collection मध्ये
+      current demo session save/update.
+    */
+
+    await setDoc(
+
+      doc(
+        db,
+        "users",
+        currentUser.uid
+      ),
+
+      {
+
+        uid:
+          currentUser.uid,
+
+        name:
+          currentUserData.name,
+
+        role:
+          role,
+
+        subject:
+          subject || "",
+
+        demo:
+          true,
+
+        updatedAt:
+          serverTimestamp()
+
+      },
+
+      {
+        merge: true
+      }
+
+    );
+
+
+    hide("loginPage");
+    hide("subjectPage");
+    show("app");
+
+
+    updateUserInfo();
+
+    setupPermissions();
+
+    startListeners();
+
+    showPage("dashboard");
+
+
+  } catch (error) {
+
+    console.error(
+      "SESSION ERROR:",
+      error
+    );
+
+
+    alert(
+      getFriendlyError(error)
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   USER INFO
+========================================================= */
+
+function updateUserInfo() {
+
+  const role =
+    currentUserData?.role || "";
+
+  const subject =
+    currentUserData?.subject || "";
+
+
+  let text =
+    currentUserData?.name ||
+    "User";
+
+
+  if (
+    role === "teacher" &&
+    subject
+  ) {
+
+    text +=
+      ` • ${subject}`;
+
+  }
+
+
+  setText(
+    "userInfo",
+    text
+  );
+
+}
 
 
 /* =========================================================
@@ -487,48 +360,104 @@ onAuthStateChanged(
 function setupPermissions() {
 
   const role =
-    currentUserData?.role || "student";
+    currentUserData?.role;
 
 
   const teacherNav =
-    document.getElementById("teacherNav");
+    document.getElementById(
+      "teacherNav"
+    );
+
 
   const peopleNav =
-    document.getElementById("peopleNav");
+    document.getElementById(
+      "peopleNav"
+    );
 
 
-  if (role === "student") {
+  if (teacherNav) {
 
-    if (teacherNav)
-      teacherNav.classList.add("hidden");
-
-    if (peopleNav)
-      peopleNav.classList.add("hidden");
-
-  } else {
-
-    if (teacherNav)
-      teacherNav.classList.remove("hidden");
+    teacherNav.classList.remove(
+      "hidden"
+    );
 
   }
 
 
+  if (peopleNav) {
+
+    if (
+      role === "admin" ||
+      role === "principal"
+    ) {
+
+      peopleNav.classList.remove(
+        "hidden"
+      );
+
+    } else {
+
+      peopleNav.classList.add(
+        "hidden"
+      );
+
+    }
+
+  }
+
+
+  const subjectSelect =
+    document.getElementById(
+      "taskSubject"
+    );
+
+
   if (
-    role === "admin" ||
-    role === "principal"
+    subjectSelect &&
+    role === "teacher"
   ) {
 
-    if (peopleNav)
-      peopleNav.classList.remove("hidden");
+    subjectSelect.value =
+      currentUserData.subject;
 
-  } else {
+    subjectSelect.disabled =
+      true;
 
-    if (peopleNav)
-      peopleNav.classList.add("hidden");
+  } else if (subjectSelect) {
+
+    subjectSelect.disabled =
+      false;
 
   }
 
 }
+
+
+/* =========================================================
+   LOGOUT
+========================================================= */
+
+window.logout = function() {
+
+  stopListeners();
+
+  currentUser = null;
+  currentUserData = null;
+
+  students = [];
+  users = [];
+  tasks = [];
+  statuses = [];
+
+  selectedRole = "";
+  selectedSubject = "";
+
+  hide("app");
+  hide("subjectPage");
+
+  show("loginPage");
+
+};
 
 
 /* =========================================================
@@ -544,33 +473,42 @@ function startListeners() {
 
   unsubscribeUsers =
     onSnapshot(
+
       collection(
         db,
         "users"
       ),
+
       snapshot => {
 
         users =
           snapshot.docs.map(
             item => ({
-              id: item.id,
+
+              id:
+                item.id,
+
               ...item.data()
+
             })
           );
 
 
-        updateDashboard();
         renderUsers();
 
+        updateDashboard();
+
       },
+
       error => {
 
         console.error(
-          "USERS LISTENER:",
+          "USERS ERROR:",
           error
         );
 
       }
+
     );
 
 
@@ -578,24 +516,36 @@ function startListeners() {
 
   unsubscribeStudents =
     onSnapshot(
+
       collection(
         db,
         "students"
       ),
+
       snapshot => {
 
         students =
           snapshot.docs
+
             .map(
               item => ({
-                id: item.id,
+
+                id:
+                  item.id,
+
                 ...item.data()
+
               })
             )
+
             .sort(
               (a, b) =>
-                Number(a.roll || 0) -
-                Number(b.roll || 0)
+                Number(
+                  a.roll || 0
+                ) -
+                Number(
+                  b.roll || 0
+                )
             );
 
 
@@ -606,14 +556,16 @@ function startListeners() {
         updateReportSelect();
 
       },
+
       error => {
 
         console.error(
-          "STUDENTS LISTENER:",
+          "STUDENTS ERROR:",
           error
         );
 
       }
+
     );
 
 
@@ -621,26 +573,37 @@ function startListeners() {
 
   unsubscribeTasks =
     onSnapshot(
+
       collection(
         db,
         "tasks"
       ),
+
       snapshot => {
 
         tasks =
           snapshot.docs
+
             .map(
               item => ({
-                id: item.id,
+
+                id:
+                  item.id,
+
                 ...item.data()
+
               })
             )
+
             .sort(
               (a, b) =>
-                String(b.date || "")
-                  .localeCompare(
-                    String(a.date || "")
+                String(
+                  b.date || ""
+                ).localeCompare(
+                  String(
+                    a.date || ""
                   )
+                )
             );
 
 
@@ -649,14 +612,16 @@ function startListeners() {
         updateDashboard();
 
       },
+
       error => {
 
         console.error(
-          "TASKS LISTENER:",
+          "TASKS ERROR:",
           error
         );
 
       }
+
     );
 
 
@@ -664,17 +629,23 @@ function startListeners() {
 
   unsubscribeStatuses =
     onSnapshot(
+
       collection(
         db,
         "statuses"
       ),
+
       snapshot => {
 
         statuses =
           snapshot.docs.map(
             item => ({
-              id: item.id,
+
+              id:
+                item.id,
+
               ...item.data()
+
             })
           );
 
@@ -684,14 +655,16 @@ function startListeners() {
         updateDashboard();
 
       },
+
       error => {
 
         console.error(
-          "STATUS LISTENER:",
+          "STATUS ERROR:",
           error
         );
 
       }
+
     );
 
 }
@@ -704,23 +677,38 @@ function startListeners() {
 function stopListeners() {
 
   if (unsubscribeUsers) {
+
     unsubscribeUsers();
+
     unsubscribeUsers = null;
+
   }
+
 
   if (unsubscribeStudents) {
+
     unsubscribeStudents();
+
     unsubscribeStudents = null;
+
   }
+
 
   if (unsubscribeTasks) {
+
     unsubscribeTasks();
+
     unsubscribeTasks = null;
+
   }
 
+
   if (unsubscribeStatuses) {
+
     unsubscribeStatuses();
+
     unsubscribeStatuses = null;
+
   }
 
 }
@@ -730,13 +718,15 @@ function stopListeners() {
    PAGE NAVIGATION
 ========================================================= */
 
-window.showPage = function (page) {
+window.showPage = function(page) {
 
   document
     .querySelectorAll(".page")
     .forEach(
       section =>
-        section.classList.add("hidden")
+        section.classList.add(
+          "hidden"
+        )
     );
 
 
@@ -745,43 +735,40 @@ window.showPage = function (page) {
 
 
   if (!selected) {
+
     console.warn(
       "Page not found:",
       page
     );
+
     return;
+
   }
 
 
-  selected.classList.remove("hidden");
+  selected.classList.remove(
+    "hidden"
+  );
 
 
-  if (page === "students") {
+  if (page === "dashboard")
+    updateDashboard();
 
+
+  if (page === "students")
     renderStudents();
 
-  }
 
-
-  if (page === "tasks") {
-
+  if (page === "tasks")
     renderTasks();
 
-  }
 
-
-  if (page === "people") {
-
+  if (page === "people")
     renderUsers();
 
-  }
 
-
-  if (page === "reports") {
-
+  if (page === "reports")
     updateReportSelect();
-
-  }
 
 };
 
@@ -790,7 +777,7 @@ window.showPage = function (page) {
    ADD STUDENT
 ========================================================= */
 
-window.addStudent = async function () {
+window.addStudent = async function() {
 
   const role =
     currentUserData?.role;
@@ -798,44 +785,56 @@ window.addStudent = async function () {
 
   if (
     ![
-      "admin",
+      "teacher",
       "principal",
-      "teacher"
+      "admin"
     ].includes(role)
   ) {
 
     alert(
-      "तुमच्याकडे Student add करण्याची permission नाही."
+      "Permission denied."
     );
 
     return;
+
   }
 
 
   const name =
     document
-      .getElementById("studentName")
-      ?.value.trim();
+      .getElementById(
+        "studentName"
+      )
+      ?.value
+      .trim();
 
 
   const roll =
     Number(
       document
-        .getElementById("rollNo")
+        .getElementById(
+          "rollNo"
+        )
         ?.value
     );
 
 
   const phone =
     document
-      .getElementById("studentPhone")
-      ?.value.trim();
+      .getElementById(
+        "studentPhone"
+      )
+      ?.value
+      .trim();
 
 
   const studentClass =
     document
-      .getElementById("studentClass")
-      ?.value.trim();
+      .getElementById(
+        "studentClass"
+      )
+      ?.value
+      .trim();
 
 
   if (!name || !roll) {
@@ -845,13 +844,16 @@ window.addStudent = async function () {
     );
 
     return;
+
   }
 
 
   const duplicate =
     students.some(
       student =>
-        Number(student.roll) === roll
+        Number(
+          student.roll
+        ) === roll
     );
 
 
@@ -862,50 +864,50 @@ window.addStudent = async function () {
     );
 
     return;
+
   }
 
 
   try {
 
     await addDoc(
+
       collection(
         db,
         "students"
       ),
+
       {
-        name: name,
-        roll: roll,
-        phone: phone,
-        studentClass:
-          studentClass,
+
+        name,
+
+        roll,
+
+        phone,
+
+        studentClass,
+
         createdBy:
           currentUser.uid,
+
         createdAt:
           serverTimestamp()
+
       }
+
     );
 
 
-    document.getElementById(
-      "studentName"
-    ).value = "";
-
-    document.getElementById(
-      "rollNo"
-    ).value = "";
-
-    document.getElementById(
-      "studentPhone"
-    ).value = "";
-
-    document.getElementById(
-      "studentClass"
-    ).value = "";
+    clearValue("studentName");
+    clearValue("rollNo");
+    clearValue("studentPhone");
+    clearValue("studentClass");
 
 
     alert(
       "Student successfully added."
     );
+
 
   } catch (error) {
 
@@ -913,6 +915,7 @@ window.addStudent = async function () {
       "ADD STUDENT:",
       error
     );
+
 
     alert(
       getFriendlyError(error)
@@ -949,9 +952,6 @@ function renderStudents() {
       .toLowerCase() || "";
 
 
-  grid.innerHTML = "";
-
-
   const filtered =
     students.filter(
       student => {
@@ -969,12 +969,19 @@ function renderStudents() {
 
 
         return (
-          name.includes(search) ||
-          roll.includes(search)
+          name.includes(
+            search
+          ) ||
+          roll.includes(
+            search
+          )
         );
 
       }
     );
+
+
+  grid.innerHTML = "";
 
 
   if (!filtered.length) {
@@ -983,15 +990,12 @@ function renderStudents() {
       `<p>No students found.</p>`;
 
     return;
+
   }
 
 
   filtered.forEach(
     student => {
-
-      const total =
-        tasks.length;
-
 
       const completed =
         tasks.filter(
@@ -1015,19 +1019,21 @@ function renderStudents() {
           </div>
 
           <div class="student-name">
-            👨‍🎓 ${escapeHTML(
+            👨‍🎓
+            ${escapeHTML(
               student.name
             )}
           </div>
 
           <p>
             ${escapeHTML(
-              student.studentClass || ""
+              student.studentClass ||
+              "-"
             )}
           </p>
 
           <small>
-            🟢 ${completed}/${total}
+            🟢 ${completed}/${tasks.length}
             Complete
           </small>
 
@@ -1045,7 +1051,7 @@ function renderStudents() {
    OPEN STUDENT
 ========================================================= */
 
-window.openStudent = function (
+window.openStudent = function(
   studentId
 ) {
 
@@ -1080,7 +1086,8 @@ window.openStudent = function (
       <div class="profile-header">
 
         <h2>
-          👨‍🎓 ${escapeHTML(
+          👨‍🎓
+          ${escapeHTML(
             student.name
           )}
         </h2>
@@ -1093,14 +1100,16 @@ window.openStudent = function (
         <p>
           Class:
           ${escapeHTML(
-            student.studentClass || "-"
+            student.studentClass ||
+            "-"
           )}
         </p>
 
         <p>
           📞
           ${escapeHTML(
-            student.phone || "-"
+            student.phone ||
+            "-"
           )}
         </p>
 
@@ -1139,7 +1148,8 @@ window.openStudent = function (
         <div class="task">
 
           <h3>
-            📚 ${escapeHTML(
+            📚
+            ${escapeHTML(
               task.title
             )}
           </h3>
@@ -1147,33 +1157,39 @@ window.openStudent = function (
           <p>
             Subject:
             ${escapeHTML(
-              task.subject || "-"
+              task.subject ||
+              "-"
             )}
           </p>
 
           <p>
             Type:
             ${escapeHTML(
-              task.type || "-"
+              task.type ||
+              "-"
             )}
           </p>
 
           <p>
             📅
             ${escapeHTML(
-              task.date || "-"
+              task.date ||
+              "-"
             )}
           </p>
 
           <p>
             ${escapeHTML(
-              task.description || ""
+              task.description ||
+              ""
             )}
           </p>
 
           <strong>
             Status:
-            ${escapeHTML(status)}
+            ${escapeHTML(
+              status
+            )}
           </strong>
 
           ${
@@ -1205,8 +1221,62 @@ window.openStudent = function (
 
 
 /* =========================================================
-   STATUS BUTTONS
+   STATUS
 ========================================================= */
+
+function getStatus(
+  studentId,
+  taskId
+) {
+
+  const found =
+    statuses.find(
+      status =>
+        status.studentId ===
+          studentId &&
+        status.taskId ===
+          taskId
+    );
+
+
+  return found?.status ||
+    "Pending";
+
+}
+
+
+function canEditTaskStatus(
+  task
+) {
+
+  const role =
+    currentUserData?.role;
+
+
+  if (
+    role === "admin" ||
+    role === "principal"
+  ) {
+
+    return true;
+
+  }
+
+
+  if (role === "teacher") {
+
+    return (
+      task.subject ===
+      currentUserData.subject
+    );
+
+  }
+
+
+  return false;
+
+}
+
 
 function getStatusButtons(
   studentId,
@@ -1269,47 +1339,108 @@ function getStatusButtons(
 
 
 /* =========================================================
-   CAN EDIT STATUS
+   SET STATUS
 ========================================================= */
 
-function canEditTaskStatus(
-  task
+window.setStatus = async function(
+  studentId,
+  taskId,
+  status
 ) {
 
-  const role =
-    currentUserData?.role;
+  try {
+
+    const existing =
+      statuses.find(
+        item =>
+          item.studentId ===
+            studentId &&
+          item.taskId ===
+            taskId
+      );
 
 
-  if (
-    role === "admin" ||
-    role === "principal"
-  ) {
+    if (existing) {
 
-    return true;
+      await updateDoc(
 
-  }
+        doc(
+          db,
+          "statuses",
+          existing.id
+        ),
+
+        {
+
+          status,
+
+          updatedBy:
+            currentUser.uid,
+
+          updatedAt:
+            serverTimestamp()
+
+        }
+
+      );
+
+    } else {
+
+      await addDoc(
+
+        collection(
+          db,
+          "statuses"
+        ),
+
+        {
+
+          studentId,
+
+          taskId,
+
+          status,
+
+          updatedBy:
+            currentUser.uid,
+
+          createdAt:
+            serverTimestamp()
+
+        }
+
+      );
+
+    }
 
 
-  if (role === "teacher") {
+    openStudent(
+      studentId
+    );
 
-    return (
-      task.createdBy ===
-      currentUser.uid
+
+  } catch (error) {
+
+    console.error(
+      "STATUS ERROR:",
+      error
+    );
+
+
+    alert(
+      getFriendlyError(error)
     );
 
   }
 
-
-  return false;
-
-}
+};
 
 
 /* =========================================================
    ADD TASK
 ========================================================= */
 
-window.addTask = async function () {
+window.addTask = async function() {
 
   const role =
     currentUserData?.role;
@@ -1317,21 +1448,22 @@ window.addTask = async function () {
 
   if (
     ![
-      "admin",
+      "teacher",
       "principal",
-      "teacher"
+      "admin"
     ].includes(role)
   ) {
 
     alert(
-      "Only Teacher, Principal किंवा Admin can add tasks."
+      "Task add करण्याची permission नाही."
     );
 
     return;
+
   }
 
 
-  const subject =
+  let subject =
     document
       .getElementById(
         "taskSubject"
@@ -1352,7 +1484,8 @@ window.addTask = async function () {
       .getElementById(
         "taskTitle"
       )
-      ?.value.trim();
+      ?.value
+      .trim();
 
 
   const description =
@@ -1360,7 +1493,8 @@ window.addTask = async function () {
       .getElementById(
         "taskDescription"
       )
-      ?.value.trim();
+      ?.value
+      .trim();
 
 
   const date =
@@ -1371,86 +1505,35 @@ window.addTask = async function () {
       ?.value;
 
 
+  if (
+    role === "teacher" &&
+    currentUserData.subject
+  ) {
+
+    subject =
+      currentUserData.subject;
+
+  }
+
+
   if (!title) {
 
     alert(
-      "Task title टाका."
+      "Task / Chapter टाका."
     );
 
     return;
+
   }
 
 
   try {
 
     await addDoc(
+
       collection(
         db,
         "tasks"
       ),
-      {
-        subject:
-          subject || "",
-        type:
-          type || "",
-        title:
-          title,
-        description:
-          description || "",
-        date:
-          date || "",
-        createdBy:
-          currentUser.uid,
-        createdByName:
-          currentUserData.name || "",
-        createdAt:
-          serverTimestamp()
-      }
-    );
 
-
-    document.getElementById(
-      "taskTitle"
-    ).value = "";
-
-    document.getElementById(
-      "taskDescription"
-    ).value = "";
-
-    document.getElementById(
-      "taskDate"
-    ).value = "";
-
-
-    alert(
-      "Task सर्व students साठी assign झाला."
-    );
-
-  } catch (error) {
-
-    console.error(
-      "ADD TASK:"
-
-      import {
-  getAuth,
-  GoogleAuthProvider,
-  signInWithPopup
-} from "https://www.gstatic.com/firebasejs/12.1.0/firebase-auth.js";
-
-const auth = getAuth();
-const provider = new GoogleAuthProvider();
-
-document.getElementById("googleLogin").addEventListener("click", async () => {
-  try {
-    const result = await signInWithPopup(auth, provider);
-
-    console.log("Logged in:", result.user.displayName);
-
-    // Login झाल्यावर dashboard
-    window.location.href = "dashboard.html";
-
-  } catch (error) {
-    console.error("Google Login Error:", error);
-    alert(error.message);
-  }
-});
+   
