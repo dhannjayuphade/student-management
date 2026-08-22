@@ -19,6 +19,124 @@ import {
    GLOBAL STATE
 ========================================================= */
 
+let selectedRole = "";
+let selectedSubject = "";
+
+window.selectRole = function(role) {
+
+  selectedRole = role;
+
+  const roleScreen =
+    document.getElementById("roleScreen");
+
+  const subjectScreen =
+    document.getElementById("subjectScreen");
+
+  const title =
+    document.getElementById("selectedRoleTitle");
+
+  if (title) {
+
+    title.textContent =
+      role.charAt(0).toUpperCase() +
+      role.slice(1);
+
+  }
+
+  if (roleScreen)
+    roleScreen.classList.add("hidden");
+
+  if (subjectScreen)
+    subjectScreen.classList.remove("hidden");
+};
+
+
+window.selectSubject = async function(subject) {
+
+  selectedSubject = subject;
+
+  const subjectScreen =
+    document.getElementById("subjectScreen");
+
+  const app =
+    document.getElementById("app");
+
+  const userInfo =
+    document.getElementById("userInfo");
+
+  const subjectName =
+    document.getElementById("subjectName");
+
+  if (subjectScreen)
+    subjectScreen.classList.add("hidden");
+
+  if (app)
+    app.classList.remove("hidden");
+
+  if (userInfo) {
+
+    userInfo.textContent =
+      `${selectedRole.toUpperCase()} • ${subject}`;
+
+  }
+
+  if (subjectName)
+    subjectName.textContent = subject;
+
+  showPage("dashboard");
+
+  console.log(
+    "Selected:",
+    selectedRole,
+    selectedSubject
+  );
+};
+
+
+window.backToRoles = function() {
+
+  selectedRole = "";
+  selectedSubject = "";
+
+  const roleScreen =
+    document.getElementById("roleScreen");
+
+  const subjectScreen =
+    document.getElementById("subjectScreen");
+
+  const app =
+    document.getElementById("app");
+
+  if (app)
+    app.classList.add("hidden");
+
+  if (subjectScreen)
+    subjectScreen.classList.add("hidden");
+
+  if (roleScreen)
+    roleScreen.classList.remove("hidden");
+
+};
+
+
+window.showPage = function(page) {
+
+  document
+    .querySelectorAll(".page")
+    .forEach(section => {
+
+      section.classList.add("hidden");
+
+    });
+
+
+  const selected =
+    document.getElementById(page);
+
+  if (selected)
+    selected.classList.remove("hidden");
+
+};
 let currentUser = null;
 let currentUserData = null;
 
